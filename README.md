@@ -15,7 +15,7 @@ If you need Python 2 then it should be easy to covert by using "".format() inste
 ```
 import subprocess
 import random
-
+import os
 
 REPS = 100
 CRASH_ON_FIRST_FAILURE = True  # change to False if the device is not reliable
@@ -65,25 +65,18 @@ def destroy(part):
     part - partition to be destroyed
     """
     s = part_size(part)
+    bs = os.stat(".").st_blksize # use the block size suggested by the kernel (usually 4096 bytes) for the filesystem currently in use
     destroy_block(part, bs=1, seek=s, assert_returncode=1)  # "test" destroying 1 byte at size boundary, should fail
     destroy_block(part, bs=1, seek=(s - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 bytes before boundary, should pass
     destroy_block(part, bs=1, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 byte
     while True:
-        print(f"Destroying {REPS} byte-sized blocks")
+        print(f"Destroying {REPS} {bs} bytes sized blocks")
         for _ in range(REPS):
-            destory_random_block(part, part_size=s, bs=1)
-        print(f"Destroying {REPS} KB-sized blocks")
-        for _ in range(REPS):
-            destory_random_block(part, part_size=s, bs=1024)
-        print(f"Destroying {REPS} MB-sized blocks")
-        for _ in range(REPS):
-            destory_random_block(part, part_size=s, bs=(1024 * 1024))
-        rand_size = random.randint(1, 1024 * 1024)
-        print(f"Destroying {REPS} {rand_size}-sized blocks")
+            destory_random_block(part, part_size=s, bs=bs)
+        rand_size = random.randint(1, 64) * bs
+        print(f"Destroying {REPS} {rand_size} bytes sized blocks")
         for _ in range(REPS):
             destory_random_block(part, part_size=s, bs=rand_size)
-        print("\nRise and repeat\n\n")
-
 
 ```
 
