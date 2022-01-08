@@ -78,7 +78,7 @@ def destroy(part):
         print(f"Destroying {REPS} {bs} bytes sized blocks")
         for _ in range(REPS):
             destory_random_block(part, part_size=s, bs=bs)
-        rand_size = random.randint(1, 64) * bs
+        rand_size = random.randint(1, 16*bs)
         print(f"Destroying {REPS} {rand_size} bytes sized blocks")
         for _ in range(REPS):
             destory_random_block(part, part_size=s, bs=rand_size)
