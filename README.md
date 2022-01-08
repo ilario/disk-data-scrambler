@@ -85,7 +85,6 @@ def destroy(part):
         print("\nRise and repeat\n\n")
 
 
-destroy("/dev/sdb1")
 ```
 
 
