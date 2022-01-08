@@ -45,14 +45,19 @@ def destroy_block(part, bs, seek, assert_returncode=None, print_result=False):
         print(f"Destroyed bs={bs} of={part} seek={seek}")
 
 
+def get_random_seek(part_size, bs):
+    seek_max = int(part_size / bs)
+    seek = random.randint(0, seek_max)
+    return seek
+
+
 def destory_random_block(part, part_size, bs):
     """
     bs=1 destroys bytes sized block
     bs=1024 destroys KB sized block
     etc.
     """
-    seek_max = int(part_size / bs)
-    seek = random.randint(0, seek_max)
+    seek = get_random_seek(part_size, bs)
     if CRASH_ON_FIRST_FAILURE:
         assert_returncode = 0
     else:
