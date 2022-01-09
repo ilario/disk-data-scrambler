@@ -95,10 +95,6 @@ def destroy(part):
         print(f"Destroying {REPS} {bs} bytes sized blocks")
         seek_list = generate_seek_list(part_size, bs=bs)
         destory_list_blocks(part, bs=bs, seek_list)
-        rand_size = random.randint(1, 16*bs)
-        print(f"Destroying {REPS} {rand_size} bytes sized blocks")
-        seek_list = generate_seek_list(part_size, bs=rand_size)
-        destory_list_blocks(part, bs=rand_size, seek_list)
 
 ```
 
