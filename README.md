@@ -1,16 +1,39 @@
+# `insecure_drive_wipe` - Insecurely but quickly wipe a hard drive in a coarse (unsafe!) way. Use at your own risk!
 
-The original post from [Aleksandr Levchuk](https://serverfault.com/users/58336/aleksandr-levchuk) on StackExchange [can be found clicking here](https://serverfault.com/a/1001381).
+The initial code has been posted from [Aleksandr Levchuk](https://serverfault.com/users/58336/aleksandr-levchuk) on StackExchange [can be found clicking here](https://serverfault.com/a/1001381).
 
-A Python 3 script, with:
+A Python 3 script for coarsely (not securely!) destroy the data on a partition or a device, with:
 
 * awareness of block device size
 * verification of block device size, by writing bytes at the boundaries
 * guarantee of first and last byte destroy
 * random data overwrites
 * random offset
-* random batch sizes
 
 If you need Python 2 then it should be easy to covert by using "".format() instead of f"" strings.
+
+## Is this tool for you?
+
+If you want to destroy the data on a hard drive, think about the following:
+
+* if you don't need the drive anymore, consider a mechanical destruction (e.g. open the case and hammer the disks)
+* use a secure secure disk wiping utility (e.g. dd writing the whole disk with random data), that will make the data recovery quite impossible, check [this page for suggestions](https://wiki.archlinux.org/title/Securely_wipe_disk)
+* if you can't wait for a proper wipe to be completed (e.g. the drive is slow or damaged or you're in a hurry) make sure to **properly shred at least the important files**, for example the Firefox passwords storage and the shadow file (in the example, the partition to destroy has been mounted on `/mnt`):
+
+```
+shred /mnt/home/*/.mozilla/firefox/*/key3.db
+shred /mnt/home/*/.mozilla/firefox/*/logins.json
+shred /mnt/etc/shadow
+```
+
+* then if you're fine with data being possible to recover (it is very likely that most of your files will not be even touched by this quick tool), but you just want to make it a bit harder, you can use the code reported here.
+
+
+## Code to copy and paste
+
+Make sure you understand the code for avoiding destroying the wrong thing!
+
+***Use at your own risk! This will destroy your data but does not guarantee that it's 100% destroyed!***
 
 ```
 import subprocess
@@ -37,6 +60,9 @@ def part_size(part):
 
 
 def destroy_block(part, bs, seek, assert_returncode=None, print_result=False):
+    """
+    Executes dd taking /dev/urandom in input as source of pseudo-random data
+    """
     run(
         "dd", f"bs={bs}", "if=/dev/urandom", f"of={part}", f"seek={seek}", "count=1",
         assert_returncode=assert_returncode
@@ -60,6 +86,9 @@ def generate_seek_list(part_size, bs)
 
 
 def destroy_list_blocks(part, bs, seek_list):
+    """
+    seek_list - array indicating position of blocks to be destroyed
+    """
     if CRASH_ON_FIRST_FAILURE:
         assert_returncode = 0
     else:
@@ -99,7 +128,7 @@ def destroy(part):
 ```
 
 
-Example output:
+## Example output
 
 ```
 # "test" destroying 1 byte at size boundary, should fail
@@ -108,23 +137,14 @@ Destroyed bs=1 of=/dev/sdb1 seek=10736369663
 # "test" destroying first 1 byte
 Destroyed bs=1 of=/dev/sdb1 seek=0
 
-Destroying 100 byte-sized blocks
-Destroying 100 KB-sized blocks
-Destroying 100 MB-sized blocks
-Destroying 100 875091-sized blocks
+Destroying 100 4096 bytes sized blocks
+Destroying 100 4096 bytes sized blocks
+Destroying 100 4096 bytes sized blocks
 
-Rise and repeat
-
-
-Destroying 100 byte-sized blocks
-Destroying 100 KB-sized blocks
-Destroying 100 MB-sized blocks
-Destroying 100 1028370-sized blocks
-
-Rise and repeat
 ```
 
-To run:
+
+## To run
 
 * Copy the source code all but the last line
 * On the victim host log-in as root
@@ -133,9 +153,11 @@ To run:
 * Type destroy("/dev/XYZ") and return key twice
 * After a few hours, hit Ctrl-c
 
-NOTE: "/dev/XYZ" is the partition name that will lose data.
+NOTE: "/dev/XYZ" is the partition or device name that will LOSE ALL THE DATA.
 
-WARNING: Watch out for Fat-finger errors. The data will be gone forever so double-check what partition you are typing in.
+WARNING: Watch out for Fat-finger errors. The data will be gone forever so DOUBLE-CHECK what PARTITION or DEVICE you are typing in.
 
 WARNING: Running this script for days in cloud services may cost if you are charged for disk write IOPs.
+
+***Use at your own risk! This will destroy your data but does not guarantee that it's 100% destroyed!***
 
