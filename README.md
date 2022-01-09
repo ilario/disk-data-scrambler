@@ -51,6 +51,23 @@ def get_random_seek(part_size, bs):
     return seek
 
 
+def generate_seek_list(part_size, bs)
+    seek_list = []
+    for _ in range(REPS):
+        seek_list.append(get_random_seek(part_size, bs))
+    seek_list.sort()
+    return seek_list
+
+
+def destroy_list_blocks(part, bs, seek_list):
+    if CRASH_ON_FIRST_FAILURE:
+        assert_returncode = 0
+    else:
+        assert_returncode = None
+    for seek in seek_list:
+        destroy_block(part, bs=bs, seek=seek, assert_returncode=assert_returncode)
+
+
 def destory_random_block(part, part_size, bs):
     """
     bs=1 destroys bytes sized block
@@ -76,12 +93,12 @@ def destroy(part):
     destroy_block(part, bs=1, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 byte
     while True:
         print(f"Destroying {REPS} {bs} bytes sized blocks")
-        for _ in range(REPS):
-            destory_random_block(part, part_size=s, bs=bs)
+        seek_list = generate_seek_list(part_size, bs=bs)
+        destory_list_blocks(part, bs=bs, seek_list)
         rand_size = random.randint(1, 16*bs)
         print(f"Destroying {REPS} {rand_size} bytes sized blocks")
-        for _ in range(REPS):
-            destory_random_block(part, part_size=s, bs=rand_size)
+        seek_list = generate_seek_list(part_size, bs=rand_size)
+        destory_list_blocks(part, bs=rand_size, seek_list)
 
 ```
 
