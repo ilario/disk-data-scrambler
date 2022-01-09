@@ -87,7 +87,7 @@ def destroy(part):
     part - partition to be destroyed
     """
     s = part_size(part)
-    bs = os.stat(".").st_blksize # use the block size suggested by the kernel (usually 4096 bytes) for the filesystem currently in use
+    bs = os.stat(".").st_blksize # use the block size suggested by the kernel (usually 4096 bytes) for the filesystem currently in use, very likely this value requires optimization
     destroy_block(part, bs=1, seek=s, assert_returncode=1)  # "test" destroying 1 byte at size boundary, should fail
     destroy_block(part, bs=1, seek=(s - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 bytes before boundary, should pass
     destroy_block(part, bs=1, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 byte
