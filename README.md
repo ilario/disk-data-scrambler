@@ -77,7 +77,7 @@ def get_random_seek(part_size, bs):
     return seek
 
 
-def generate_seek_list(part_size, bs)
+def generate_seek_list(part_size, bs):
     seek_list = []
     for _ in range(REPS):
         seek_list.append(get_random_seek(part_size, bs))
@@ -123,7 +123,7 @@ def destroy(part):
     while True:
         print(f"Destroying {REPS} {bs} bytes sized blocks")
         seek_list = generate_seek_list(part_size, bs=bs)
-        destory_list_blocks(part, bs=bs, seek_list)
+        destroy_list_blocks(part, bs, seek_list)
 
 ```
 
