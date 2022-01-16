@@ -1,8 +1,8 @@
-# `insecure_drive_wipe` - Insecurely but quickly wipe a hard drive in a coarse (unsafe!) way. Use at your own risk!
+#  disk-data-scrambler - Insecurely but quickly destroy all data on a hard drive in a coarse (unreliable!) way. Use at your own risk!
 
 The initial code has been posted from [Aleksandr Levchuk](https://serverfault.com/users/58336/aleksandr-levchuk) on StackExchange [can be found clicking here](https://serverfault.com/a/1001381).
 
-A Python 3 script for coarsely (not securely!) destroy the data on a partition or a device, with:
+A Python 3 script for coarsely (not securely! Most of the data will remain untouched!) destroy the data on a partition or a device, with:
 
 * awareness of block device size
 * verification of block device size, by writing bytes at the boundaries
@@ -14,7 +14,9 @@ If you need Python 2 then it should be easy to covert by using "".format() inste
 
 ## Is this tool for you?
 
-If you want to destroy the data on a hard drive, think about the following:
+***Most likely not.***
+
+If you want to destroy all the data on a hard drive, think about the following:
 
 * if you don't need the drive anymore, consider a mechanical destruction (e.g. open the case and hammer the disks)
 * use a secure secure disk wiping utility (e.g. dd writing the whole disk with random data), that will make the data recovery quite impossible, check [this page for suggestions](https://wiki.archlinux.org/title/Securely_wipe_disk)
@@ -26,12 +28,12 @@ shred /mnt/home/*/.mozilla/firefox/*/logins.json
 shred /mnt/etc/shadow
 ```
 
-* then if you're fine with data being possible to recover (it is very likely that most of your files will not be even touched by this quick tool), but you just want to make it a bit harder, you can use the code reported here.
+* then if you're fine with data being possible to recover (it is very likely that most of your files will not be even touched by this quick tool) in an easy way (it's very easy, for example, using [PhotoRec](https://www.cgsecurity.org/wiki/PhotoRec) which is open source and can easily recover also deleted files), but you just want to make it a bit harder, you can use the code reported here.
 
 
 ## Code to copy and paste
 
-Make sure you understand the code for avoiding destroying the wrong thing!
+Make sure you understand the code for **avoiding deleting the wrong thing!**
 
 ***Use at your own risk! This will destroy your data but does not guarantee that it's 100% destroyed!***
 
@@ -146,16 +148,16 @@ Destroying 100 4096 bytes sized blocks
 
 ## To run
 
-* Copy the source code all but the last line
+* Copy the source code
 * On the victim host log-in as root
 * On the victim host run: python3
-* Paste the code from step 1
-* Type destroy("/dev/XYZ") and return key twice
+* Paste the code
+* Type `destroy("/dev/XYZ")`
 * After a few hours, hit Ctrl-c
 
 NOTE: "/dev/XYZ" is the partition or device name that will LOSE ALL THE DATA.
 
-WARNING: Watch out for Fat-finger errors. The data will be gone forever so DOUBLE-CHECK what PARTITION or DEVICE you are typing in.
+WARNING: Watch out for Fat-finger errors. The data will be gone forever so **DOUBLE-CHECK what PARTITION or DEVICE you are typing in**.
 
 WARNING: Running this script for days in cloud services may cost if you are charged for disk write IOPs.
 
