@@ -14,7 +14,7 @@ If you need Python 2 then it should be easy to covert by using "".format() inste
 
 ## Is this tool for you?
 
-***Most likely not.***
+**Most likely not. There are many other much better tools which _actually_ delete all the data!**
 
 If you want to destroy all the data on a hard drive, think about the following:
 
@@ -148,11 +148,13 @@ Destroying 100 4096 bytes sized blocks
 
 ## To run
 
+* Read again the "Is this tool for you?" section in this README
 * Copy the source code
 * On the victim host log-in as root
 * On the victim host run: python3
 * Paste the code
-* Type `destroy("/dev/XYZ")`
+* Type `destroy("/dev/XYZ")` making extremely sure to not indicate the wrong partition/device
+* Hit Enter
 * After a few hours, hit Ctrl-c
 
 NOTE: "/dev/XYZ" is the partition or device name that will LOSE ALL THE DATA.
