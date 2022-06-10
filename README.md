@@ -20,22 +20,39 @@ If you want to destroy all the data on a hard drive, think about the following:
 
 * if you don't need the drive anymore, consider a mechanical destruction (e.g. open the case and hammer the disks)
 * use a secure secure disk wiping utility (e.g. dd writing the whole disk with random data), that will make the data recovery quite impossible, check [this page for suggestions](https://wiki.archlinux.org/title/Securely_wipe_disk)
-* if you can't wait for a proper wipe to be completed (e.g. the drive is slow or damaged or you're in a hurry) make sure to **properly shred at least the important files**, for example the Firefox passwords storage and the shadow file (in the example, the partition to destroy has been mounted on `/mnt`):
+* if you can't wait for a proper wipe to be completed (e.g. the drive is slow or damaged or you're in a hurry) AND if you're fine with data being possible to recover (it is very likely that **most of your files will not be even touched by this quick tool**) in an easy way (it's very easy, for example, using [PhotoRec](https://www.cgsecurity.org/wiki/PhotoRec) which is open source and can easily recover also deleted files, just try it), but you just want to make the data recovery a bit harder, you can use the code reported here.
+
+## Preparation
+
+* Make sure to **properly shred at least the important files**, for example the Firefox passwords storage and the shadow file (in the example, the partition to destroy has been mounted on `/mntYourDiskToDESTROY`):
 
 ```
-shred /mnt/home/*/.mozilla/firefox/*/key3.db
-shred /mnt/home/*/.mozilla/firefox/*/logins.json
-shred /mnt/etc/shadow
+shred /mntYourDiskToDESTROY/home/*/.mozilla/firefox/*/key3.db
+shred /mntYourDiskToDESTROY/home/*/.mozilla/firefox/*/logins.json
+shred /mntYourDiskToDESTROY/etc/shadow
 ```
 
-* then if you're fine with data being possible to recover (it is very likely that most of your files will not be even touched by this quick tool) in an easy way (it's very easy, for example, using [PhotoRec](https://www.cgsecurity.org/wiki/PhotoRec) which is open source and can easily recover also deleted files), but you just want to make it a bit harder, you can use the code reported here.
+* Damage all the non-deleted files. The code reported here goes around the disk writing rubbish with the only purpose to destroy also the traces of the deleted files, but it is very likely that most of your disk is empty and that most of this shredding is targetting useless areas. A command like this should write one kB of rubbish at the beginning of each file in the partition you mounted on `/mntYourDiskToDESTROY`:
 
+```
+find /mntYourDiskToDESTROY -type f -exec dd if=/dev/zero bs=1024 count=1 status=noxfer of="{}" \;
+```
+
+* Format the partitions you want to destroy. It is not going to destroy the data but at least you make sure that the easily accessible index to the files names is not as easily accessible anymore:
+
+```
+mkfs.ext2 /dev/sdYourDiskToDESTROY1
+mkfs.ext2 /dev/sdYourDiskToDESTROY2
+...
+```
 
 ## Code to copy and paste
 
+Please note that this is designed for working on a drive or partition not currently in use, so if you have opened it, unmount it before running the following code.
+
 Make sure you understand the code for **avoiding deleting the wrong thing!**
 
-***Use at your own risk! This will destroy your data but does not guarantee that it's 100% destroyed!***
+***Use at your own risk! This will randomly damage some of your data but does not destroy all of it!***
 
 ```
 import subprocess
