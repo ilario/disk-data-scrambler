@@ -1,4 +1,6 @@
-#  disk-data-scrambler - Insecurely but quickly destroy all data on a hard drive in a coarse (unreliable!) way. Use at your own risk!
+#  disk-data-scrambler - Insecurely but quickly destroy some of the data on a hard drive
+
+Use at your own risk! The code here presented is still **untested**.
 
 The initial code has been posted from [Aleksandr Levchuk](https://serverfault.com/users/58336/aleksandr-levchuk) on StackExchange [can be found clicking here](https://serverfault.com/a/1001381).
 
@@ -10,13 +12,15 @@ A Python 3 script for coarsely (not securely! Most of the data will remain untou
 * random data overwrites
 * random offset
 
+It has been designed for old mechanical hard drives in the case that a proper wipe would take too long.
+
 If you need Python 2 then it should be easy to covert by using "".format() instead of f"" strings.
 
 ## Is this tool for you?
 
-**Most likely not. There are many other much better tools which _actually_ delete all the data!**
+**Most likely not. There are many other much better tools which _actually_ destroy all the data!**
 
-If you want to destroy all the data on a hard drive, think about the following:
+If you want to destroy the data on a hard drive, think about the following:
 
 * if you don't need the drive anymore, consider a mechanical destruction (e.g. open the case and hammer the disks)
 * use a secure secure disk wiping utility (e.g. dd writing the whole disk with random data), that will make the data recovery quite impossible, check [this page for suggestions](https://wiki.archlinux.org/title/Securely_wipe_disk)
