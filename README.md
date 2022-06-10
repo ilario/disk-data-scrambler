@@ -120,20 +120,6 @@ def destroy_list_blocks(part, bs, seek_list):
         destroy_block(part, bs=bs, seek=seek, assert_returncode=assert_returncode)
 
 
-def destory_random_block(part, part_size, bs):
-    """
-    bs=1 destroys bytes sized block
-    bs=1024 destroys KB sized block
-    etc.
-    """
-    seek = get_random_seek(part_size, bs)
-    if CRASH_ON_FIRST_FAILURE:
-        assert_returncode = 0
-    else:
-        assert_returncode = None
-    destroy_block(part, bs=bs, seek=seek, assert_returncode=assert_returncode)
-
-
 def destroy(part):
     """
     part - partition to be destroyed
