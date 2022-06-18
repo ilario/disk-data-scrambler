@@ -129,14 +129,14 @@ def destroy(part):
     s_bs = s / bs
     destroy_block(part=part, bs=bs, seek=s_bs, assert_returncode=1)  # "test" destroying 1 block at size boundary, should fail
     destroy_block(part=part, bs=bs, seek=(s_bs - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 block before boundary, should pass
-    subprocess.run("sync")
+    os.sync()
     destroy_block(part=part, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block
-    subprocess.run("sync")
+    os.sync()
     while True:
         print(f"Destroying {REPS} {bs} bytes sized blocks")
         seek_list = generate_seek_list(part_size=part_size, bs=bs)
         destroy_list_blocks(part=part, bs=bs, seek_list=seek_list)
-        subprocess.run("sync")
+        os.sync()
 
 ```
 
