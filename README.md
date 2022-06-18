@@ -76,16 +76,36 @@ def run(*cmd, assert_returncode=None, print_stderr=False):
     return completed.stdout
 
 
-def target_size(target):
+def target_identify(target):
     """
-    Partition or large file size in bytes
+    Partition or large file?
     """
-    if stat.S_ISBLK(os.stat(target).st_mode): # detect if target is a block device, taken from https://www.systutorials.com/how-to-check-whether-a-file-of-a-given-path-is-a-block-device-in-python/
-        size = int(run("blockdev", "--getsize64", target))
-    elif os.stat.isfile(target):
-        size = os.path.getsize(target)
+    target_is_partition = stat.S_ISBLK(os.stat(target).st_mode): # detect if target is a block device, taken from https://www.systutorials.com/how-to-check-whether-a-file-of-a-given-path-is-a-block-device-in-python/
+    target_is_file = os.stat.isfile(target):
+    # ^ is xor
+    assert target_is_partition ^ target_is_file,
+        "The indicated target is neither a block device (partition or whole device) nor a file. Make sure you know what you're doing!"
+    if target_is_partition:
+        target_size = part_size(target)
     else:
-        raise Exception("The indicated target is neither a block device nor a file. Make sure you know what you're doing!")
+        target_size = file_size(target)
+
+    return target_is_partition, target_size
+
+
+def part_size(target):
+    """
+    Partition or whole device size in bytes
+    """
+    size = int(run("blockdev", "--getsize64", target))
+    return size
+
+
+def file_size(target)
+    """
+    Large file size in bytes
+    """
+    size = os.path.getsize(target)
     return size
 
 
@@ -94,7 +114,7 @@ def destroy_block(target, bs, seek, assert_returncode=None, print_result=False):
     Executes dd taking /dev/urandom in input as source of pseudo-random data
     """
     run(
-        # conv=notrunc is used when writing on large files, in order to edit the file in the indicated position without setting the end of the file just after that point 
+        # conv=notrunc is used when writing on large files, in order to edit the file in the indicated position without setting the end of the file just after that point
         "dd", f"bs={bs}", "if=/dev/urandom", f"of={target}", f"seek={seek}", "count=1", "conv=notrunc",
         assert_returncode=assert_returncode
     )
@@ -131,11 +151,12 @@ def destroy(target):
     """
     target - partition or large file to be destroyed
     """
-    s = target_size(target=target)
     bs = os.stat(".").st_blksize # use the block size suggested by the kernel (usually 4096 bytes) for the filesystem currently in use, very likely this value requires optimization. Could be obtained via "blockdev --getbsz"
-    s_bs = int(s / bs)
-    destroy_block(target=target, bs=bs, seek=s_bs, assert_returncode=1)  # "test" destroying 1 block at size boundary, should fail
-    destroy_block(target=target, bs=bs, seek=(s_bs - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 block before boundary, should pass
+    target_is_partition, target_size = target_identify(target)
+    target_size_in_blocks = int(target_size / bs)
+    if target_is_partition:
+        destroy_block(target=target, bs=bs, seek=target_size_in_blocks, assert_returncode=1)  # "test" destroying 1 block at size boundary, should fail. When writing on a file it would not fail.
+    destroy_block(target=target, bs=bs, seek=(target_size_in_blocks - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 block before boundary, should pass
     os.sync()
     destroy_block(target=target, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block
     os.sync()
@@ -143,8 +164,8 @@ def destroy(target):
     while True:
         seek_set = generate_seek_set(target_size=target_size, bs=bs)
         seek_set_len = len(seek_set)
-        blocks_done = blocks_done + seek_set_len*(1 - blocks_done/s_bs) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
-        percentage_done = 100 * blocks_done / s_bs
+        blocks_done = blocks_done + seek_set_len*(1 - blocks_done/target_size_in_blocks) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
+        percentage_done = 100 * blocks_done / target_size_in_blocks
         print(f"Destroying {seek_set_len} x {bs} bytes sized blocks, {percentage_done:.3} %")
         destroy_set_blocks(target=target, bs=bs, seek_set=seek_set)
         os.sync()
