@@ -116,6 +116,7 @@ def destroy_block(target, bs, seek, assert_returncode=None, print_result=False):
     """
     run(
         # conv=notrunc is used when writing on large files, in order to edit the file in the indicated position without setting the end of the file just after that point
+        # if you think that urandom random data generator is the bottleneck, you can try with OpenSSL, check out here: https://unix.stackexchange.com/questions/72216/fast-way-to-randomize-hd but really, if the disk write is not the limiting factor, why are you using this tool? Just wipe the whole disk!
         "dd", f"bs={bs}", "if=/dev/urandom", f"of={target}", f"seek={seek}", "count=1", "conv=notrunc",
         assert_returncode=assert_returncode
     )
