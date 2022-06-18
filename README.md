@@ -4,7 +4,7 @@ Use at your own risk! The code here presented is still **untested**.
 
 The initial code has been posted from [Aleksandr Levchuk](https://serverfault.com/users/58336/aleksandr-levchuk) on StackExchange [can be found clicking here](https://serverfault.com/a/1001381).
 
-A Python 3 script for coarsely (not securely! Most of the data will remain untouched!) destroy the data on a partition or a device, with:
+A Python 3 script for coarsely (not securely! Most of the data will remain untouched!) destroy the data on a partition or a whole device or a large file, with:
 
 * awareness of block device size
 * verification of block device size, by writing bytes at the boundaries
@@ -12,7 +12,7 @@ A Python 3 script for coarsely (not securely! Most of the data will remain untou
 * random data overwrites
 * random offset
 
-It has been designed for old mechanical hard drives in the case that a proper wipe would take too long.
+It has been designed **for old mechanical hard drives** in the case that a proper wipe would take too long.
 
 If you need Python 2 then it should be easy to covert by using "".format() instead of f"" strings.
 
