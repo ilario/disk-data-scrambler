@@ -101,23 +101,22 @@ def get_random_seek(part_size, bs):
     return seek
 
 
-def generate_seek_list(part_size, bs):
-    seek_list = []
+def generate_seek_set(part_size, bs):
+    seek_set = {} # using a set instead of a list for avoiding duplicates and having it already sorted
     for _ in range(REPS):
-        seek_list.append(get_random_seek(part_size=part_size, bs=bs))
-    seek_list.sort()
-    return seek_list
+        seek_set.add(get_random_seek(part_size=part_size, bs=bs))
+    return seek_set
 
 
-def destroy_list_blocks(part, bs, seek_list):
+def destroy_set_blocks(part, bs, seek_set):
     """
-    seek_list - array indicating position of blocks to be destroyed
+    seek_set - set of elements indicating position of blocks to be destroyed
     """
     if CRASH_ON_FIRST_FAILURE:
         assert_returncode = 0
     else:
         assert_returncode = None
-    for seek in seek_list:
+    for seek in seek_set:
         destroy_block(part=part, bs=bs, seek=seek, assert_returncode=assert_returncode)
 
 
@@ -135,11 +134,12 @@ def destroy(part):
     os.sync()
     blocks_done = 0
     while True:
-        blocks_done = blocks_done + REPS*(1 - blocks_done/s_bs) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
+        seek_set = generate_seek_set(part_size=part_size, bs=bs)
+        seek_set_len = len(seek_set)
+        blocks_done = blocks_done + seek_set_len*(1 - blocks_done/s_bs) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
         percentage_done = 100 * blocks_done / s_bs
-        print(f"Destroying {REPS} {bs} bytes sized blocks, {percentage_done:.3} %")
-        seek_list = generate_seek_list(part_size=part_size, bs=bs)
-        destroy_list_blocks(part=part, bs=bs, seek_list=seek_list)
+        print(f"Destroying {seek_set_len} x {bs} bytes sized blocks, {percentage_done:.3} %")
+        destroy_set_blocks(part=part, bs=bs, seek_set=seek_set)
         os.sync()
 
 ```
