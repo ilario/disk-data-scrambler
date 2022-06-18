@@ -42,6 +42,7 @@ shred /mntYourDiskToDESTROY/etc/shadow
 find /mntYourDiskToDESTROY -type f -exec dd if=/dev/zero bs=1024 count=1 status=noxfer of="{}" \;
 ```
 
+* Unmount the partition /mntYourDiskToDESTROY.
 * Format the partitions you want to destroy. It is not going to destroy the data but at least you make sure that the easily accessible index to the files names is not as easily accessible anymore:
 
 ```
@@ -132,8 +133,11 @@ def destroy(part):
     os.sync()
     destroy_block(part=part, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block
     os.sync()
+    blocks_done = 0
     while True:
-        print(f"Destroying {REPS} {bs} bytes sized blocks")
+        blocks_done = blocks_done + REPS*(1 - blocks_done/s_bs) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
+        percentage_done = 100 * blocks_done / s_bs
+        print(f"Destroying {REPS} {bs} bytes sized blocks, {percentage_done:.3} %")
         seek_list = generate_seek_list(part_size=part_size, bs=bs)
         destroy_list_blocks(part=part, bs=bs, seek_list=seek_list)
         os.sync()
