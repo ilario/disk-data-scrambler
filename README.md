@@ -63,6 +63,7 @@ Make sure you understand the code for **avoiding deleting the wrong thing!**
 import subprocess
 import random
 import os
+from hurry.filesize import size
 
 REPS = 100
 CRASH_ON_FIRST_FAILURE = True  # change to False if the device is not reliable
@@ -153,12 +154,15 @@ def destroy(target):
     """
     bs = os.stat(".").st_blksize # use the block size suggested by the kernel (usually 4096 bytes) for the filesystem currently in use, very likely this value requires optimization. Could be obtained via "blockdev --getbsz"
     target_is_partition, target_size = target_identify(target)
+    target_size_human = size(target_size)
+    confirmation = input(f"The data in {target} with size {target_size_human} will be damaged, including the partitions table if present. Type YES if you are willing to proceed: ")
+    assert confirmation == "YES", "Exiting"
     target_size_in_blocks = int(target_size / bs)
     if target_is_partition:
         destroy_block(target=target, bs=bs, seek=target_size_in_blocks, assert_returncode=1)  # "test" destroying 1 block at size boundary, should fail. When writing on a file it would not fail.
     destroy_block(target=target, bs=bs, seek=(target_size_in_blocks - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 block before boundary, should pass
     os.sync()
-    destroy_block(target=target, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block
+    destroy_block(target=target, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block, deleting the first copy of the partitions table if present
     os.sync()
     blocks_done = 0
     while True:
