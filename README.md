@@ -76,39 +76,39 @@ def run(*cmd, assert_returncode=None, print_stderr=False):
     return completed.stdout
 
 
-def part_size(part):
+def target_size(target):
     """
     Partition size in bytes
     """
-    return int(run("blockdev", "--getsize64", part))
+    return int(run("blockdev", "--getsize64", target))
 
 
-def destroy_block(part, bs, seek, assert_returncode=None, print_result=False):
+def destroy_block(target, bs, seek, assert_returncode=None, print_result=False):
     """
     Executes dd taking /dev/urandom in input as source of pseudo-random data
     """
     run(
-        "dd", f"bs={bs}", "if=/dev/urandom", f"of={part}", f"seek={seek}", "count=1",
+        "dd", f"bs={bs}", "if=/dev/urandom", f"of={target}", f"seek={seek}", "count=1",
         assert_returncode=assert_returncode
     )
     if print_result:
-        print(f"Destroyed bs={bs} of={part} seek={seek}")
+        print(f"Destroyed bs={bs} of={target} seek={seek}")
 
 
-def get_random_seek(part_size, bs):
-    seek_max = int(part_size / bs)
+def get_random_seek(target_size, bs):
+    seek_max = int(target_size / bs)
     seek = random.randint(0, seek_max)
     return seek
 
 
-def generate_seek_set(part_size, bs):
+def generate_seek_set(target_size, bs):
     seek_set = {} # using a set instead of a list for avoiding duplicates and having it already sorted
     for _ in range(REPS):
-        seek_set.add(get_random_seek(part_size=part_size, bs=bs))
+        seek_set.add(get_random_seek(target_size=target_size, bs=bs))
     return seek_set
 
 
-def destroy_set_blocks(part, bs, seek_set):
+def destroy_set_blocks(target, bs, seek_set):
     """
     seek_set - set of elements indicating position of blocks to be destroyed
     """
@@ -117,29 +117,29 @@ def destroy_set_blocks(part, bs, seek_set):
     else:
         assert_returncode = None
     for seek in seek_set:
-        destroy_block(part=part, bs=bs, seek=seek, assert_returncode=assert_returncode)
+        destroy_block(target=target, bs=bs, seek=seek, assert_returncode=assert_returncode)
 
 
-def destroy(part):
+def destroy(target):
     """
-    part - partition to be destroyed
+    target - partition or large file to be destroyed
     """
-    s = part_size(part=part)
+    s = target_size(target=target)
     bs = os.stat(".").st_blksize # use the block size suggested by the kernel (usually 4096 bytes) for the filesystem currently in use, very likely this value requires optimization. Could be obtained via "blockdev --getbsz"
     s_bs = s / bs
-    destroy_block(part=part, bs=bs, seek=s_bs, assert_returncode=1)  # "test" destroying 1 block at size boundary, should fail
-    destroy_block(part=part, bs=bs, seek=(s_bs - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 block before boundary, should pass
+    destroy_block(target=target, bs=bs, seek=s_bs, assert_returncode=1)  # "test" destroying 1 block at size boundary, should fail
+    destroy_block(target=target, bs=bs, seek=(s_bs - 1), assert_returncode=0, print_result=True)  # "test" destroying 1 block before boundary, should pass
     os.sync()
-    destroy_block(part=part, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block
+    destroy_block(target=target, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block
     os.sync()
     blocks_done = 0
     while True:
-        seek_set = generate_seek_set(part_size=part_size, bs=bs)
+        seek_set = generate_seek_set(target_size=target_size, bs=bs)
         seek_set_len = len(seek_set)
         blocks_done = blocks_done + seek_set_len*(1 - blocks_done/s_bs) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
         percentage_done = 100 * blocks_done / s_bs
         print(f"Destroying {seek_set_len} x {bs} bytes sized blocks, {percentage_done:.3} %")
-        destroy_set_blocks(part=part, bs=bs, seek_set=seek_set)
+        destroy_set_blocks(target=target, bs=bs, seek_set=seek_set)
         os.sync()
 
 ```
