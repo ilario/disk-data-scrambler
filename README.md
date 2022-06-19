@@ -63,7 +63,7 @@ Make sure you understand the code for **avoiding deleting the wrong thing!**
 import subprocess
 import random
 import os
-from hurry.filesize import size
+import stat
 
 REPS = 100
 CRASH_ON_FIRST_FAILURE = True  # change to False if the device is not reliable
@@ -81,16 +81,15 @@ def target_identify(target):
     """
     Partition or large file?
     """
-    target_is_partition = stat.S_ISBLK(os.stat(target).st_mode): # detect if target is a block device, taken from https://www.systutorials.com/how-to-check-whether-a-file-of-a-given-path-is-a-block-device-in-python/
-    target_is_file = os.stat.isfile(target):
+    target_is_partition = stat.S_ISBLK(os.stat(target).st_mode) # detect if target is a block device, taken from https://www.systutorials.com/how-to-check-whether-a-file-of-a-given-path-is-a-block-device-in-python/
+    target_is_file = os.path.isfile(target)
     # ^ is xor
-    assert target_is_partition ^ target_is_file,
+    assert target_is_partition ^ target_is_file, \
         "The indicated target is neither a block device (partition or whole device) nor a file. Make sure you know what you're doing!"
     if target_is_partition:
         target_size = part_size(target)
     else:
         target_size = file_size(target)
-
     return target_is_partition, target_size
 
 
@@ -98,11 +97,15 @@ def part_size(target):
     """
     Partition or whole device size in bytes
     """
-    size = int(run("blockdev", "--getsize64", target))
+    try:
+        size = int(run("blockdev", "--getsize64", target))
+    except ValueError:
+        print("Cannot get the size of that partition or device. Are you root? Do you know what you are doing?")
+        exit()
     return size
 
 
-def file_size(target)
+def file_size(target):
     """
     Large file size in bytes
     """
@@ -130,22 +133,24 @@ def get_random_seek(target_size, bs):
     return seek
 
 
-def generate_seek_set(target_size, bs):
-    seek_set = {} # using a set instead of a list for avoiding duplicates and having it already sorted
+def generate_seek_list(target_size, bs):
+    seek_set = set([]) # using a set instead of a list for avoiding duplicates
     for _ in range(REPS):
         seek_set.add(get_random_seek(target_size=target_size, bs=bs))
-    return seek_set
+    seek_list = sorted(seek_set)
+    return seek_list
 
 
-def destroy_set_blocks(target, bs, seek_set):
+def destroy_list_blocks(target, bs, seek_list):
     """
-    seek_set - set of elements indicating position of blocks to be destroyed
+    seek_list - list of elements indicating position of blocks to be destroyed
     """
     if CRASH_ON_FIRST_FAILURE:
         assert_returncode = 0
     else:
         assert_returncode = None
-    for seek in seek_set:
+    for seek in seek_list:
+        print(seek)
         destroy_block(target=target, bs=bs, seek=seek, assert_returncode=assert_returncode)
 
 
@@ -155,9 +160,9 @@ def destroy(target):
     """
     bs = os.stat(".").st_blksize # use the block size suggested by the kernel (usually 4096 bytes) for the filesystem currently in use, very likely this value requires optimization. Could be obtained via "blockdev --getbsz"
     target_is_partition, target_size = target_identify(target)
-    target_size_human = size(target_size)
-    confirmation = input(f"The data in {target} with size {target_size_human} will be damaged, including the partitions table if present. Type YES if you are willing to proceed: ")
-    assert confirmation == "YES", "Exiting"
+    target_size_MB = target_size / 1024 / 1024
+    confirmation = input(f"The data in {target} with size {target_size_MB:.2f} MB will be damaged, including the partitions table if present. Type YES if you are willing to proceed: ")
+    assert confirmation == "YES", "User did not confirm; exiting."
     target_size_in_blocks = int(target_size / bs)
     if target_is_partition:
         destroy_block(target=target, bs=bs, seek=target_size_in_blocks, assert_returncode=1)  # "test" destroying 1 block at size boundary, should fail. When writing on a file it would not fail.
@@ -166,14 +171,17 @@ def destroy(target):
     destroy_block(target=target, bs=bs, seek=0, assert_returncode=0, print_result=True)  # "test" destroying first 1 block, deleting the first copy of the partitions table if present
     os.sync()
     blocks_done = 0
+    percentage_done = .0
     while True:
-        seek_set = generate_seek_set(target_size=target_size, bs=bs)
-        seek_set_len = len(seek_set)
-        blocks_done = blocks_done + seek_set_len*(1 - blocks_done/target_size_in_blocks) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
-        percentage_done = 100 * blocks_done / target_size_in_blocks
-        print(f"Destroying {seek_set_len} x {bs} bytes sized blocks, {percentage_done:.3} %")
-        destroy_set_blocks(target=target, bs=bs, seek_set=seek_set)
+        seek_list = generate_seek_list(target_size=target_size, bs=bs)
+        seek_list_len = len(seek_list)
+        print(f"Destroying {seek_list_len} x {bs} bytes sized blocks, {percentage_done:.3} %")
+        destroy_list_blocks(target=target, bs=bs, seek_list=seek_list)
         os.sync()
+        blocks_done = blocks_done + seek_list_len*(1 - blocks_done/target_size_in_blocks) # the factor in parenthesis accounts for the probability of destroying blocks that have been already destroyed in previous rounds
+        percentage_done = 100 * blocks_done / target_size_in_blocks
+
+
 
 ```
 
