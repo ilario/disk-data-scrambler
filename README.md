@@ -150,7 +150,6 @@ def destroy_list_blocks(target, bs, seek_list):
     else:
         assert_returncode = None
     for seek in seek_list:
-        print(seek)
         destroy_block(target=target, bs=bs, seek=seek, assert_returncode=assert_returncode)
 
 
@@ -189,18 +188,13 @@ def destroy(target):
 ## Example output
 
 ```
-# "test" destroying 1 byte at size boundary, should fail
-# "test" destroying 1 bytes before boundary, should pass
-Destroyed bs=1 of=/dev/sdb1 seek=10736369663
-# "test" destroying first 1 byte
-Destroyed bs=1 of=/dev/sdb1 seek=0
-
-Destroying 100 4096 bytes sized blocks
-Destroying 100 4096 bytes sized blocks
-Destroying 100 4096 bytes sized blocks
-
+Destroyed bs=4096 of=/dev/sdb1 seek=10736369663
+Destroyed bs=4096 of=/dev/sdb1 seek=0
+Destroying 100 x 4096 bytes sized blocks, 0.0 %
+Destroying 100 x 4096 bytes sized blocks, 0.0001 %
 ```
 
+If you expect the completion to get to 100 % you should just use another tool, read again the "Is this tool for you?" section! Also, it will never reach 100 %.
 
 ## To run
 
