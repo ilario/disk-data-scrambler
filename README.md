@@ -39,7 +39,8 @@ shred /mntYourDiskToDESTROY/etc/shadow
 * Damage all the non-deleted files. The code reported here goes around the disk writing rubbish with the only purpose to destroy also the traces of the deleted files, but it is very likely that most of your disk is empty and that most of this shredding is targetting useless areas. A command like this should write one kB of rubbish at the beginning of each file in the partition you mounted on `/mntYourDiskToDESTROY`:
 
 ```
-find /mntYourDiskToDESTROY -type f -exec dd if=/dev/zero bs=1024 count=1 status=noxfer of="{}" \;
+find /mntYourDiskToDESTROY -type f -exec dd if=/dev/urandom bs=4096 count=1 status=noxfer conv=notrunc of="{}" \;
+find /mntYourDiskToDESTROY -type f -exec dd if=/dev/zero bs=4096 count=1 status=noxfer of="{}" \;
 ```
 
 * Unmount the partition /mntYourDiskToDESTROY.
